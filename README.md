@@ -15,7 +15,7 @@ The easiest way to add this overlay is using `eselect repository`:
 
 1.  Sync the repository:
     ```bash
-    sudo eselect repository add atlabs git https://git.atlabs.io/atlabs/gentoo-overlay.git
+    sudo eselect repository add atlabs git https://github.com:project3301/gentoo-overlay.git
     sudo emaint sync -r atlabs
     ```
 
@@ -27,7 +27,7 @@ Alternatively, you can add it manually by creating a file at `/etc/portage/repos
 [atlabs]
 location = /var/db/repos/atlabs
 sync-type = git
-sync-uri = https://git.atlabs.io/atlabs/gentoo-overlay.git
+sync-uri = https://github.com:project3301/gentoo-overlay.git
 auto-sync = yes
 ```
 
