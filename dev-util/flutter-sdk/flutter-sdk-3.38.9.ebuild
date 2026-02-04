@@ -48,21 +48,23 @@ pkg_setup() {
 }
 
 src_install() {
-	[cite_start]# [cite: 2] Install the entire directory to /opt/flutter
+	# Install the entire directory to /opt/flutter
 	insinto /opt/flutter
 	doins -r .
 
-	# Fix ownership so the group can write
-	# This prevents the "dubious ownership" git error
+	# Fix ownership so the group can write to everything (required for flutter/git)
 	fowners -R root:flutterusers /opt/flutter
 	fperms -R g+w /opt/flutter
 
-	[cite_start]# [cite: 2] Fix permissions for binaries
+	# Mass-apply execute permissions to all shell scripts and binaries in bin/
+	# This avoids the "Permission denied" errors for internal helper scripts
+	find "${ED}/opt/flutter/bin" -type f \( -name "*.sh" -o ! -name "*.*" \) -exec chmod a+x {} +
+
+	# Specifically ensure the main entry points are executable (belt and suspenders)
 	fperms +x /opt/flutter/bin/flutter
 	fperms +x /opt/flutter/bin/dart
-	fperms +x /opt/flutter/bin/internal/shared.sh
 	
-	[cite_start]# [cite: 2] Symlink binaries to /usr/bin
+	# Symlink binaries to /usr/bin
 	dosym ../../opt/flutter/bin/flutter /usr/bin/flutter
 	dosym ../../opt/flutter/bin/dart /usr/bin/dart
 }
