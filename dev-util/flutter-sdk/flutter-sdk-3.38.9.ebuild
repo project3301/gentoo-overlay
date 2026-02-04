@@ -48,29 +48,35 @@ pkg_setup() {
 }
 
 src_install() {
-	# Install the entire directory to /opt/flutter
+	# 1. Standard installation
 	insinto /opt/flutter
 	doins -r .
 
-	# Fix ownership so the group can write to everything (required for flutter/git)
+	# 2. Fix ownership to the group
 	fowners -R root:flutterusers /opt/flutter
+	
+	# 3. Apply the "Setgid" bit to directories
+	# This ensures new files created by flutter (like the Dart SDK) 
+	# inherit the 'flutterusers' group automatically.
+	find "${ED}/opt/flutter" -type d -exec chmod g+s {} + 
+
+	# 4. Give the group full read/write/execute permissions
 	fperms -R g+w /opt/flutter
 
-	# Mass-apply execute permissions to all shell scripts and binaries in bin/
-	# This avoids the "Permission denied" errors for internal helper scripts
-	find "${ED}/opt/flutter/bin" -type f \( -name "*.sh" -o ! -name "*.*" \) -exec chmod a+x {} +
-
-	# Specifically ensure the main entry points are executable (belt and suspenders)
-	fperms +x /opt/flutter/bin/flutter
-	fperms +x /opt/flutter/bin/dart
+	# 5. Mass-apply execute permissions to internal scripts
+	find "${ED}/opt/flutter/bin" -type f \( -name "*.sh" -o ! -name "*.*" \) -exec chmod a+x {} + 
 	
-	# Symlink binaries to /usr/bin
+	# 6. Symlinks 
 	dosym ../../opt/flutter/bin/flutter /usr/bin/flutter
 	dosym ../../opt/flutter/bin/dart /usr/bin/dart
 }
 
 pkg_postinst() {
-	elog "To avoid 'dubious ownership' errors in git, add your user to the group:"
-	elog "  sudo usermod -aG flutterusers <your_user>"
-	elog "Then log out and back in."
+	# 7. The Final Piece: Git Configuration
+	# Instead of a global config, we set it specifically for this repo
+	# so Git knows it is a shared "safe" repository.
+	einfo "Configuring shared git safety for /opt/flutter..."
+	git config --system --add safe.directory /opt/flutter
+	
+	elog "Ensure your user is in the 'flutterusers' group."
 }
